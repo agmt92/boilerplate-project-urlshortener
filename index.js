@@ -99,6 +99,7 @@ app.get('/api/allurls', async (req, res) => {
 });
 
 // Endpoint to clear all URLs
+// curl -X DELETE http://localhost:3000/api/a-hacker-cleared-my-db  ─╯
 app.delete('/api/a-hacker-cleared-my-db', async (req, res) => {
   try {
     console.log('Clearing all URLs');
