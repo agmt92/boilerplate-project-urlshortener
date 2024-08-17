@@ -109,3 +109,27 @@ app.delete('/api/a-hacker-cleared-my-db', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+// Redirect to original URL
+
+app.get('/api/shorturl/:short_url', async (req, res) => {
+  try {
+    let short_url = req.params.short_url;
+    const url = await Url.findOne({ short_url
+    });
+
+
+    if (url) {
+      console.log('Redirecting to:', url.original_url);
+      res.redirect
+      (url.original_url);
+    }
+    else {
+      res.json({ error: 'No URL found' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+}
+);
