@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser'); 
+const dns = require('dns');
+const url = require('url');
 
 const app = express();
 // Basic Configuration
@@ -51,42 +53,47 @@ module.exports = app;
 // create short url
 app.post('/api/shorturl', async (req, res) => {
   let originalUrl = req.body.url; 
-  const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
-  const urlMatch = originalUrl.match(urlRegex);
+  const parsedUrl = url.parse(originalUrl);
 
-  if (!urlMatch) {
-    res.json({ error: 'invalid url' });
-  } else {
-    // Remove trailing slash if it exists
-    originalUrl = originalUrl.replace(/\/$/, '');
-
-    try {
-      const existingUrl = await Url.findOne({ original_url: originalUrl });
-
-      if (existingUrl) {
-        res.json({
-          original_url: existingUrl.original_url,
-          short_url: existingUrl.short_url
-        });
-      } else {
-        const count = await Url.countDocuments({});
-        const urlObj = new Url({
-          original_url: originalUrl,
-          short_url: count + 1
-        });
-
-        const data = await urlObj.save();
-        console.log('URL saved:', data);
-        res.json({
-          original_url: data.original_url,
-          short_url: data.short_url
-        });
-      }
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
+  if (!parsedUrl.hostname) {
+    return res.json({ error: 'invalid url' });
   }
+
+  dns.lookup(parsedUrl.hostname, async (err) => {
+    if (err) {
+      return res.json({ error: 'invalid url' });
+    } else {
+      // Remove trailing slash if it exists
+      originalUrl = originalUrl.replace(/\/$/, '');
+
+      try {
+        const existingUrl = await Url.findOne({ original_url: originalUrl });
+
+        if (existingUrl) {
+          res.json({
+            original_url: existingUrl.original_url,
+            short_url: existingUrl.short_url
+          });
+        } else {
+          const count = await Url.countDocuments({});
+          const urlObj = new Url({
+            original_url: originalUrl,
+            short_url: count + 1
+          });
+
+          const data = await urlObj.save();
+          console.log('URL saved:', data);
+          res.json({
+            original_url: data.original_url,
+            short_url: data.short_url
+          });
+        }
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+      }
+    }
+  });
 });
 
 app.get('/api/allurls', async (req, res) => {
@@ -129,5 +136,3 @@ app.get('/api/shorturl/:short_url', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-
