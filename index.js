@@ -1,15 +1,18 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const mongoose = require('mongoose'); // Import mongoose
+const mongoose = require('mongoose');
+const shortid = require('shortid');
+const dns = require('dns');
+const bodyParser = require('body-parser'); 
 
 const app = express();
-
 // Basic Configuration
 const port = process.env.PORT || 3000;
 
 app.use(cors());
-
+app.use(bodyParser.urlencoded({ extended: true })); 
+app.use(bodyParser.json()); 
 app.use('/public', express.static(`${process.cwd()}/public`));
 
 app.get('/', function(req, res) {
@@ -40,9 +43,69 @@ app.listen(port, function() {
 // Define URL Schema
 const urlSchema = new mongoose.Schema({
   original_url: String,
-  short_url: Number
+  short_url: String
 });
 
 const Url = mongoose.model('Url', urlSchema);
 
 module.exports = app;
+
+// create short url
+app.post('/api/shorturl', async (req, res) => {
+  const originalUrl = req.body.url; 
+  const urlRegex = /https?:\/\/www\.\w+\.\w+/;
+  const urlMatch = originalUrl.match(urlRegex);
+
+  if (!urlMatch) {
+    res.json({ error: 'invalid url' });
+  } else {
+    try {
+      const existingUrl = await Url.findOne({ original_url: originalUrl });
+
+      if (existingUrl) {
+        res.json({
+          original_url: existingUrl.original_url,
+          short_url: existingUrl.short_url
+        });
+      } else {
+        const urlObj = new Url({
+          original_url: originalUrl,
+          short_url: shortid.generate()
+        });
+
+        const data = await urlObj.save();
+        console.log('URL saved:', data);
+        res.json({
+          original_url: data.original_url,
+          short_url: data.short_url
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+});
+
+
+app.get('/api/allurls', async (req, res) => {
+  try {
+    const urls = await Url.find({});
+    res.json(urls);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Endpoint to clear all URLs
+app.delete('/api/a-hacker-cleared-my-db', async (req, res) => {
+  try {
+    console.log('Clearing all URLs');
+    await Url.deleteMany({});
+    res.json({ message: 'All URLs have been cleared' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
