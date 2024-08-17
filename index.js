@@ -2,8 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const shortid = require('shortid');
-const dns = require('dns');
 const bodyParser = require('body-parser'); 
 
 const app = express();
@@ -43,7 +41,7 @@ app.listen(port, function() {
 // Define URL Schema
 const urlSchema = new mongoose.Schema({
   original_url: String,
-  short_url: String
+  short_url: Number
 });
 
 const Url = mongoose.model('Url', urlSchema);
@@ -52,13 +50,16 @@ module.exports = app;
 
 // create short url
 app.post('/api/shorturl', async (req, res) => {
-  const originalUrl = req.body.url; 
-  const urlRegex = /https?:\/\/www\.\w+\.\w+/;
+  let originalUrl = req.body.url; 
+  const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
   const urlMatch = originalUrl.match(urlRegex);
 
   if (!urlMatch) {
     res.json({ error: 'invalid url' });
   } else {
+    // Remove trailing slash if it exists
+    originalUrl = originalUrl.replace(/\/$/, '');
+
     try {
       const existingUrl = await Url.findOne({ original_url: originalUrl });
 
@@ -68,9 +69,10 @@ app.post('/api/shorturl', async (req, res) => {
           short_url: existingUrl.short_url
         });
       } else {
+        const count = await Url.countDocuments({});
         const urlObj = new Url({
           original_url: originalUrl,
-          short_url: shortid.generate()
+          short_url: count + 1
         });
 
         const data = await urlObj.save();
@@ -87,7 +89,6 @@ app.post('/api/shorturl', async (req, res) => {
   }
 });
 
-
 app.get('/api/allurls', async (req, res) => {
   try {
     const urls = await Url.find({});
@@ -99,7 +100,7 @@ app.get('/api/allurls', async (req, res) => {
 });
 
 // Endpoint to clear all URLs
-// curl -X DELETE http://localhost:3000/api/a-hacker-cleared-my-db  ─╯
+// curl -X DELETE http://localhost:3000/api/a-hacker-cleared-my-db
 app.delete('/api/a-hacker-cleared-my-db', async (req, res) => {
   try {
     console.log('Clearing all URLs');
@@ -112,25 +113,21 @@ app.delete('/api/a-hacker-cleared-my-db', async (req, res) => {
 });
 
 // Redirect to original URL
-
 app.get('/api/shorturl/:short_url', async (req, res) => {
   try {
     let short_url = req.params.short_url;
-    const url = await Url.findOne({ short_url
-    });
-
+    const url = await Url.findOne({ short_url });
 
     if (url) {
       console.log('Redirecting to:', url.original_url);
-      res.redirect
-      (url.original_url);
-    }
-    else {
+      res.redirect(url.original_url);
+    } else {
       res.json({ error: 'No URL found' });
     }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal Server Error' });
   }
-}
-);
+});
+
+
