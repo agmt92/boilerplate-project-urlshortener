@@ -1,32 +1,176 @@
 <!DOCTYPE html>
-
-<html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>URL Shortener Microservice | freeCodeCamp.org</title>
     <link
       rel="icon"
       type="image/png"
       href="https://cdn.freecodecamp.org/universal/favicons/favicon-16x16.png"
     />
-    <link href="/public/style.css" rel="stylesheet" type="text/css" />
-  </head>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f8f9fa;
+        color: #333;
+        text-align: center;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
 
+      h1 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: bold;
+        color: #333;
+      }
+
+      .navbar-custom {
+        background-color: #e9ecef;
+      }
+
+      .container-fluid {
+        max-width: 600px;
+      }
+
+      .btn-outline-success {
+        background-color: #007bff;
+        border-color: #007bff;
+        color: white;
+      }
+
+      .btn-outline-success:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+      }
+
+      pre, code {
+        background-color: #282c34;
+        color: #abb2bf;
+        border-radius: 6px;
+        padding: 10px;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 1rem;
+      }
+
+      pre {
+        text-align: left;
+        overflow-x: auto;
+        margin-bottom: 20px;
+      }
+
+      code {
+        background-color: #2d2d2d;
+        padding: 2px 4px;
+        color: #e06c75;
+      }
+
+      footer {
+        margin-top: auto;
+        padding: 20px 0;
+        font-size: 0.9rem;
+        color: #666;
+        background-color: #e9ecef;
+      }
+
+      a {
+        color: #007bff;
+      }
+
+      a:hover {
+        color: #0056b3;
+        text-decoration: none;
+      }
+
+      #allUrls {
+        display: none;
+      }
+    </style>
+  </head>
   <body>
-    <h1>URL Shortener Microservice</h1>
-    <main>
-      <section>
-        <form action="api/shorturl" method="POST">
-          <fieldset>
-            <legend>URL Shortener</legend>
-            <label for="url_input">URL:</label>
-            <input id="url_input" type="text" name="url" placeholder="https://www.freecodecamp.org/" />
-            <input type="submit" value="POST URL" />
-          </fieldset>
+    <nav class="navbar navbar-custom navbar-light">
+      <div class="container-fluid justify-content-center">
+        <h1>URL Shortener Microservice</h1>
+        <form class="d-flex mt-3" action="api/shorturl" method="POST">
+          <input
+            id="url_input"
+            type="text"
+            name="url"
+            class="form-control me-2"
+            placeholder="Enter URL"
+            aria-label="Enter URL"
+          />
+          <button class="btn btn-outline-success" type="submit">
+            Shorten URL
+          </button>
         </form>
-      </section>
+      </div>
+    </nav>
+
+    <main class="container mt-4">
+      <div class="row justify-content-center">
+        <section class="col-12">
+          <button id="checkAllUrls" class="btn btn-secondary">
+            Check All URLs
+          </button>
+          <button id="toggleAllUrls" class="btn btn-link text-danger ms-3">
+            X
+          </button>
+          <div id="allUrls" class="mt-3"></div>
+        </section>
+        <section class="col-12 mt-4">
+          <h3>Example Usage:</h3>
+          <pre>
+            <code>POST /api/shorturl</code> with body <code>{ url: "https://www.example.com" }</code>
+          </pre>
+          <p>
+            <code>GET /api/shorturl/1</code> will redirect to <code>https://www.example.com</code>
+          </p>
+          <h3>Example Output:</h3>
+          <pre>
+            <code>{ "original_url": "https://www.example.com", "short_url": 1 }</code>
+          </pre>
+        </section>
+        <section class="col-12 mt-4">
+          <h3>URL Length Demonstration:</h3>
+          <p>
+            Original URL: <code>https://3000-freecodecam-boilerplate-bz19yo2jqcs.ws-eu115.gitpod.io/?v=1723926064938</code>
+          </p>
+          <p>Shortened URL: <code>https://short.url/7</code></p>
+        </section>
+      </div>
     </main>
-    <footer>
-      <p>By <a href="https://www.freecodecamp.org/">freeCodeCamp</a></p>
+
+    <footer class="text-center">
+      <p>
+        Quiz by <a href="https://www.freecodecamp.org/">freeCodeCamp</a><br />
+        Coded by <a href="https://github.com/agmt92">agmt92</a>
+      </p>
     </footer>
+
+    <script>
+      document.getElementById('checkAllUrls').addEventListener('click', async () => {
+        const response = await fetch('/api/allurls');
+        const urls = await response.json();
+        const allUrlsDiv = document.getElementById('allUrls');
+        allUrlsDiv.innerHTML = '<pre>' + JSON.stringify(urls, null, 2) + '</pre>';
+        allUrlsDiv.style.display = 'block';
+      });
+
+      document.getElementById('toggleAllUrls').addEventListener('click', () => {
+        const allUrlsDiv = document.getElementById('allUrls');
+        if (allUrlsDiv.style.display === 'none' || allUrlsDiv.style.display === '') {
+          allUrlsDiv.style.display = 'block';
+        } else {
+          allUrlsDiv.style.display = 'none';
+        }
+      });
+    </script>
   </body>
 </html>
