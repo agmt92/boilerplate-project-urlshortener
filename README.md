@@ -2,6 +2,8 @@
 
 This project is part of the freeCodeCamp Back End Development and APIs curriculum. It is a URL Shortener Microservice that allows users to shorten long URLs and redirect to the original URLs using the shortened versions.
 
+[Project Demo](https://dry-brushlands-17298-607b22fd3d43.herokuapp.com/)
+
 ## Table of Contents
 
 - Introduction
